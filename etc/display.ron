@@ -1,4 +1,4 @@
 (
     title: "Hello World!",
-    dimensions: Some((800, 600)),
+    dimensions: Some((1024, 768)),
 )

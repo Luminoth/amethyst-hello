@@ -17,7 +17,7 @@ pub const ARENA_HEIGHT: f32 = 100.0;
 
 fn initialize_camera(world: &mut World) {
     let mut transform = Transform::default();
-    transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 2.0, 1.0);
+    transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 1.0);
 
     world
         .create_entity()
@@ -52,7 +52,7 @@ fn initialise_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     let mut left_transform = Transform::default();
     let mut right_transform = Transform::default();
 
-    let y = 5.0;
+    let y = ARENA_HEIGHT * 0.5;
     left_transform.set_translation_xyz(PADDLE_WIDTH * 0.5, y, 0.0);
     right_transform.set_translation_xyz(ARENA_WIDTH - PADDLE_WIDTH * 0.5, y, 0.0);
 
