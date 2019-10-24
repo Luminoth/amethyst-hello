@@ -11,6 +11,7 @@ name = "amethyst-hello"
 path = "src/main.rs"
 
 [dependencies]
+amethyst-imgui = "0.5"
 log = "0.4"
 
 amethyst = { version = "0.13", features = ["vulkan"] }
