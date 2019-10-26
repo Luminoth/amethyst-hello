@@ -1,6 +1,6 @@
 use amethyst::core::{SystemDesc, Time, Transform};
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Join, Read, ReadStorage, System, SystemData, World, WriteStorage};
+use amethyst::ecs::prelude::*;
 
 use crate::components::{BallComponent, PaddleComponent, PaddleSide};
 use crate::utils::point_in_rect;

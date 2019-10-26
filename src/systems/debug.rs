@@ -1,6 +1,6 @@
 use amethyst::core::SystemDesc;
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{System, SystemData, World};
+use amethyst::ecs::prelude::*;
 
 #[derive(SystemDesc)]
 pub struct DebugSystem;

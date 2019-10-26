@@ -1,4 +1,5 @@
-use amethyst::ecs::{Component, DenseVecStorage};
+use amethyst::ecs::prelude::*;
+use amethyst::ecs::Component;
 
 pub const PADDLE_WIDTH: f32 = 4.0;
 pub const PADDLE_HEIGHT: f32 = 16.0;

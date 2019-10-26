@@ -1,6 +1,7 @@
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
 use amethyst::core::Time;
+use amethyst::ecs::prelude::*;
 use amethyst::input::{is_key_down, VirtualKeyCode};
 use amethyst::prelude::*;
 use amethyst::renderer::{
