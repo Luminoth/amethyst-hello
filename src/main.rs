@@ -1,5 +1,6 @@
 mod components;
 mod states;
+mod systems;
 
 use std::path::PathBuf;
 
@@ -11,8 +12,6 @@ use amethyst::renderer::types::DefaultBackend;
 use amethyst::renderer::RenderingBundle;
 use amethyst::utils::application_root_dir;
 use amethyst_imgui::RenderImgui;
-
-use states::*;
 
 fn main() -> amethyst::Result<()> {
     let logdir = PathBuf::new().join("var").join("logs");
@@ -43,13 +42,14 @@ fn main() -> amethyst::Result<()> {
                 .with_plugin(RenderImgui::<StringBindings>::default()),
         )?
         // transforms
-        .with_bundle(TransformBundle::new())?;
+        .with_bundle(TransformBundle::new())?
+        .with(systems::DebugSystem::default(), "debug_system", &[]);
 
     // load assets
     let assets_dir = app_root.join("assets");
 
     // start the game
-    Application::new(assets_dir, LoadingState, game_data)?.run();
+    Application::new(assets_dir, states::LoadingState, game_data)?.run();
 
     Ok(())
 }
