@@ -6,16 +6,29 @@ mod utils;
 use std::path::PathBuf;
 
 use amethyst::core::transform::TransformBundle;
+use amethyst::ecs::prelude::*;
 use amethyst::input::{InputBundle, StringBindings};
 use amethyst::prelude::*;
 use amethyst::renderer::plugins::{RenderFlat2D, RenderToWindow};
 use amethyst::renderer::types::DefaultBackend;
 use amethyst::renderer::RenderingBundle;
+use amethyst::ui::{RenderUi, UiBundle};
 use amethyst::utils::application_root_dir;
 use amethyst_imgui::RenderImgui;
 
 pub const ARENA_WIDTH: f32 = 100.0;
 pub const ARENA_HEIGHT: f32 = 100.0;
+
+#[derive(Default)]
+pub struct ScoreBoard {
+    pub score_left: i32,
+    pub score_right: i32,
+}
+
+pub struct ScoreText {
+    pub p1_score: Entity,
+    pub p2_score: Entity,
+}
 
 fn init_logging() -> amethyst::Result<()> {
     // create the logging directory
@@ -48,11 +61,15 @@ fn main() -> amethyst::Result<()> {
             RenderToWindow::from_config_path(display_config_path).with_clear([0.0, 0.0, 0.0, 1.0]),
         )
         .with_plugin(RenderFlat2D::default())
+        .with_plugin(RenderUi::default())
         .with_plugin(RenderImgui::<StringBindings>::default());
+    let ui_bundle = UiBundle::<StringBindings>::new();
 
     let game_data = GameDataBuilder::default()
         // input
         .with_bundle(input_bundle)?
+        // ui
+        .with_bundle(ui_bundle)?
         // rendering
         .with_bundle(rendering_bundle)?
         // transforms
@@ -68,6 +85,11 @@ fn main() -> amethyst::Result<()> {
             systems::BallCollisionSystem,
             "ball_collision_system",
             &["paddle_input_system", "ball_movement_system"],
+        )
+        .with(
+            systems::ScoreSystem,
+            "score_system",
+            &["ball_movement_system"],
         )
         .with_barrier()
         .with(systems::DebugSystem, "debug_system", &[]);

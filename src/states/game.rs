@@ -7,11 +7,12 @@ use amethyst::prelude::*;
 use amethyst::renderer::{
     Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
 };
+use amethyst::ui::{Anchor, TtfFormat, UiText, UiTransform};
 use log::debug;
 
 use super::PauseState;
 use crate::components::{BallComponent, PaddleComponent, PaddleSide, PADDLE_WIDTH};
-use crate::{ARENA_HEIGHT, ARENA_WIDTH};
+use crate::{ScoreText, ARENA_HEIGHT, ARENA_WIDTH};
 
 #[derive(Default)]
 pub struct GameState {
@@ -71,6 +72,7 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         sprite_number: 0,
     };
 
+    // create the paddle entities
     world
         .create_entity()
         .with(left_transform)
@@ -97,12 +99,72 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         sprite_number: 1,
     };
 
+    // create the ball entity
     world
         .create_entity()
         .with(transform)
         .with(sprite_render)
         .with(BallComponent::default())
         .build();
+}
+
+fn initialize_scoreboard(world: &mut World) {
+    // load the font
+    let font = world.read_resource::<Loader>().load(
+        "fonts/square.ttf",
+        TtfFormat,
+        (),
+        &world.read_resource(),
+    );
+
+    // create the score UI transform components
+    let p1_transform = UiTransform::new(
+        "P1".to_string(),
+        Anchor::TopMiddle,
+        Anchor::TopMiddle,
+        -50.0,
+        -50.0,
+        1.0,
+        200.0,
+        50.0,
+    );
+
+    let p2_transform = UiTransform::new(
+        "P2".to_string(),
+        Anchor::TopMiddle,
+        Anchor::TopMiddle,
+        50.0,
+        -50.0,
+        1.0,
+        200.0,
+        50.0,
+    );
+
+    // create the score UI entities
+    let p1_score = world
+        .create_entity()
+        .with(p1_transform)
+        .with(UiText::new(
+            font.clone(),
+            "0".to_string(),
+            [1.0, 1.0, 1.0, 1.0],
+            50.0,
+        ))
+        .build();
+
+    let p2_score = world
+        .create_entity()
+        .with(p2_transform)
+        .with(UiText::new(
+            font.clone(),
+            "0".to_string(),
+            [1.0, 1.0, 1.0, 1.0],
+            50.0,
+        ))
+        .build();
+
+    // add the score text resource
+    world.insert(ScoreText { p1_score, p2_score });
 }
 
 impl SimpleState for GameState {
@@ -120,6 +182,7 @@ impl SimpleState for GameState {
         // initialize entities
         initialize_camera(&mut world);
         initialize_paddles(&mut world, self.sprite_sheet_handle.clone().unwrap());
+        initialize_scoreboard(&mut world);
     }
 
     fn on_stop(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
