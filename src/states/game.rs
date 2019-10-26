@@ -1,5 +1,6 @@
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
+use amethyst::core::Time;
 use amethyst::input::{is_key_down, VirtualKeyCode};
 use amethyst::prelude::*;
 use amethyst::renderer::{
@@ -8,25 +9,30 @@ use amethyst::renderer::{
 use log::debug;
 
 use super::PauseState;
-use crate::components::{Paddle, Side, PADDLE_WIDTH};
+use crate::components::{BallComponent, PaddleComponent, PaddleSide, PADDLE_WIDTH};
+use crate::{ARENA_HEIGHT, ARENA_WIDTH};
 
-pub struct GameState;
-
-pub const ARENA_WIDTH: f32 = 100.0;
-pub const ARENA_HEIGHT: f32 = 100.0;
+#[derive(Default)]
+pub struct GameState {
+    game_start_timer: Option<f32>,
+    sprite_sheet_handle: Option<Handle<SpriteSheet>>,
+}
 
 fn initialize_camera(world: &mut World) {
+    // center the camera on the arena
     let mut transform = Transform::default();
     transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 1.0);
 
+    // add the camera entity
     world
         .create_entity()
-        .with(Camera::standard_2d(ARENA_WIDTH, ARENA_HEIGHT))
         .with(transform)
+        .with(Camera::standard_2d(ARENA_WIDTH, ARENA_HEIGHT))
         .build();
 }
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
+    // load the spritesheet texture
     let texture_handle = {
         let loader = world.read_resource::<Loader>();
         let texture_storage = world.read_resource::<AssetStorage<Texture>>();
@@ -38,6 +44,7 @@ fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
         )
     };
 
+    // load the spritesheet description
     let loader = world.read_resource::<Loader>();
     let sprite_sheet_store = world.read_resource::<AssetStorage<SpriteSheet>>();
     loader.load(
@@ -48,7 +55,8 @@ fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
     )
 }
 
-fn initialise_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
+fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
+    // create the transform components
     let mut left_transform = Transform::default();
     let mut right_transform = Transform::default();
 
@@ -56,23 +64,43 @@ fn initialise_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     left_transform.set_translation_xyz(PADDLE_WIDTH * 0.5, y, 0.0);
     right_transform.set_translation_xyz(ARENA_WIDTH - PADDLE_WIDTH * 0.5, y, 0.0);
 
+    // create a sprint renderer component
     let sprite_render = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
+        sprite_sheet: sprite_sheet,
         sprite_number: 0,
     };
 
     world
         .create_entity()
-        .with(sprite_render.clone())
-        .with(Paddle::new(Side::Left))
         .with(left_transform)
+        .with(sprite_render.clone())
+        .with(PaddleComponent::new(PaddleSide::Left))
         .build();
 
     world
         .create_entity()
-        .with(sprite_render.clone())
-        .with(Paddle::new(Side::Right))
         .with(right_transform)
+        .with(sprite_render.clone())
+        .with(PaddleComponent::new(PaddleSide::Right))
+        .build();
+}
+
+fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
+    // create the transform component
+    let mut transform = Transform::default();
+    transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 0.0);
+
+    // create a sprint renderer component
+    let sprite_render = SpriteRender {
+        sprite_sheet: sprite_sheet,
+        sprite_number: 1,
+    };
+
+    world
+        .create_entity()
+        .with(transform)
+        .with(sprite_render)
+        .with(BallComponent::default())
         .build();
 }
 
@@ -82,16 +110,38 @@ impl SimpleState for GameState {
 
         let mut world = data.world;
 
-        let sprite_sheet_handle = load_sprite_sheet(world);
+        // init internal state
+        self.game_start_timer.replace(1.0);
 
+        // load resources
+        self.sprite_sheet_handle.replace(load_sprite_sheet(world));
+
+        // initialize entities
         initialize_camera(&mut world);
-
-        world.register::<Paddle>();
-        initialise_paddles(&mut world, sprite_sheet_handle)
+        initialize_paddles(&mut world, self.sprite_sheet_handle.clone().unwrap());
     }
 
     fn on_stop(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
         debug!("Leaving game state");
+    }
+
+    fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
+        if let Some(mut timer) = self.game_start_timer.take() {
+            // advance the timer
+            {
+                let time = data.world.fetch::<Time>();
+                timer -= time.delta_seconds();
+            }
+
+            // spawn the ball when the game is ready
+            if timer <= 0.0 {
+                initialize_ball(data.world, self.sprite_sheet_handle.clone().unwrap());
+            } else {
+                self.game_start_timer.replace(timer);
+            }
+        }
+
+        Trans::None
     }
 
     fn handle_event(
@@ -101,7 +151,6 @@ impl SimpleState for GameState {
     ) -> SimpleTrans {
         if let StateEvent::Window(event) = &event {
             if is_key_down(&event, VirtualKeyCode::Escape) {
-                // Pause the game by going to the `PausedState`.
                 return Trans::Push(Box::new(PauseState));
             }
         }

@@ -1,24 +1,25 @@
-use amethyst::ecs::*;
+use amethyst::ecs::{Component, DenseVecStorage};
 
 pub const PADDLE_WIDTH: f32 = 4.0;
 pub const PADDLE_HEIGHT: f32 = 16.0;
+pub const PADDLE_SPEED: f32 = 50.0;
 
 #[derive(PartialEq, Eq)]
-pub enum Side {
+pub enum PaddleSide {
     Left,
     Right,
 }
 
 #[derive(Component)]
-pub struct Paddle {
-    pub side: Side,
+pub struct PaddleComponent {
+    pub side: PaddleSide,
     pub width: f32,
     pub height: f32,
 }
 
-impl Paddle {
-    pub fn new(side: Side) -> Paddle {
-        Paddle {
+impl PaddleComponent {
+    pub fn new(side: PaddleSide) -> Self {
+        Self {
             side,
             width: PADDLE_WIDTH,
             height: PADDLE_HEIGHT,

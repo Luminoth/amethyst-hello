@@ -15,6 +15,6 @@ impl SimpleState for MenuState {
     }
 
     fn update(&mut self, _data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
-        Trans::Switch(Box::new(GameState))
+        Trans::Switch(Box::new(GameState::default()))
     }
 }
