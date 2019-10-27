@@ -66,31 +66,14 @@ fn main() -> amethyst::Result<()> {
     let ui_bundle = UiBundle::<StringBindings>::new();
 
     let game_data = GameDataBuilder::default()
-        // input
+        // transforms (must come before ui bundle)
+        .with_bundle(TransformBundle::new())?
+        // input (must come before ui bundle)
         .with_bundle(input_bundle)?
         // ui
         .with_bundle(ui_bundle)?
         // rendering
         .with_bundle(rendering_bundle)?
-        // transforms
-        .with_bundle(TransformBundle::new())?
-        // systems
-        .with(
-            systems::PaddleInputSystem,
-            "paddle_input_system",
-            &["input_system"],
-        )
-        .with(systems::BallMovementSystem, "ball_movement_system", &[])
-        .with(
-            systems::BallCollisionSystem,
-            "ball_collision_system",
-            &["paddle_input_system", "ball_movement_system"],
-        )
-        .with(
-            systems::ScoreSystem,
-            "score_system",
-            &["ball_movement_system"],
-        )
         .with_barrier()
         .with(systems::DebugSystem, "debug_system", &[]);
 

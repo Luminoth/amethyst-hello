@@ -1,6 +1,6 @@
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::core::transform::Transform;
-use amethyst::core::Time;
+use amethyst::core::{ArcThreadPool, Time};
 use amethyst::ecs::prelude::*;
 use amethyst::input::{is_key_down, VirtualKeyCode};
 use amethyst::prelude::*;
@@ -11,11 +11,15 @@ use amethyst::ui::{Anchor, TtfFormat, UiText, UiTransform};
 use log::debug;
 
 use super::PauseState;
+
 use crate::components::{BallComponent, PaddleComponent, PaddleSide, PADDLE_WIDTH};
+use crate::systems;
 use crate::{ScoreText, ARENA_HEIGHT, ARENA_WIDTH};
 
 #[derive(Default)]
-pub struct GameState {
+pub struct GameState<'a, 'b> {
+    dispatcher: Option<Dispatcher<'a, 'b>>,
+
     game_start_timer: Option<f32>,
     sprite_sheet_handle: Option<Handle<SpriteSheet>>,
 }
@@ -68,7 +72,7 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
 
     // create a sprint renderer component
     let sprite_render = SpriteRender {
-        sprite_sheet: sprite_sheet,
+        sprite_sheet,
         sprite_number: 0,
     };
 
@@ -95,7 +99,7 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
 
     // create a sprint renderer component
     let sprite_render = SpriteRender {
-        sprite_sheet: sprite_sheet,
+        sprite_sheet,
         sprite_number: 1,
     };
 
@@ -167,11 +171,33 @@ fn initialize_scoreboard(world: &mut World) {
     world.insert(ScoreText { p1_score, p2_score });
 }
 
-impl SimpleState for GameState {
+impl<'a, 'b> SimpleState for GameState<'a, 'b> {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         debug!("Entering game state");
 
         let mut world = data.world;
+
+        let mut dispatcher_builder = DispatcherBuilder::new();
+
+        // add game systems
+        dispatcher_builder.add(systems::PaddleInputSystem, "paddle_input_system", &[]);
+        dispatcher_builder.add(systems::BallMovementSystem, "ball_movement_system", &[]);
+        dispatcher_builder.add(
+            systems::BallCollisionSystem,
+            "ball_collision_system",
+            &["paddle_input_system", "ball_movement_system"],
+        );
+        dispatcher_builder.add(
+            systems::ScoreSystem,
+            "score_system",
+            &["ball_movement_system"],
+        );
+
+        let mut dispatcher = dispatcher_builder
+            .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
+            .build();
+        dispatcher.setup(world);
+        self.dispatcher.replace(dispatcher);
 
         // init internal state
         self.game_start_timer.replace(1.0);
@@ -190,6 +216,11 @@ impl SimpleState for GameState {
     }
 
     fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
+        // run the dispatcher
+        if let Some(dispatcher) = self.dispatcher.as_mut() {
+            dispatcher.dispatch(&data.world);
+        }
+
         if let Some(mut timer) = self.game_start_timer.take() {
             // advance the timer
             {
