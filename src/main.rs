@@ -1,10 +1,14 @@
+mod audio;
 mod components;
 mod states;
 mod systems;
 mod utils;
 
+use std::iter::Cycle;
 use std::path::PathBuf;
+use std::vec::IntoIter;
 
+use amethyst::audio::{AudioBundle, SourceHandle};
 use amethyst::core::transform::TransformBundle;
 use amethyst::ecs::prelude::*;
 use amethyst::input::{InputBundle, StringBindings};
@@ -18,6 +22,23 @@ use amethyst_imgui::RenderImgui;
 
 pub const ARENA_WIDTH: f32 = 100.0;
 pub const ARENA_HEIGHT: f32 = 100.0;
+
+const BOUNCE_SOUND: &str = "audio/bounce.ogg";
+const SCORE_SOUND: &str = "audio/score.ogg";
+
+const MUSIC_TRACKS: &[&str] = &[
+    "music/Computer_Music_All-Stars_-_Wheres_My_Jetpack.ogg",
+    "music/Computer_Music_All-Stars_-_Albatross_v2.ogg",
+];
+
+pub struct Sounds {
+    pub score_sfx: SourceHandle,
+    pub bounce_sfx: SourceHandle,
+}
+
+pub struct Music {
+    pub music: Cycle<IntoIter<SourceHandle>>,
+}
 
 #[derive(Default)]
 pub struct ScoreBoard {
@@ -56,6 +77,7 @@ fn main() -> amethyst::Result<()> {
     // create bundles
     let input_bundle =
         InputBundle::<StringBindings>::new().with_bindings_from_file(binding_path)?;
+    let audio_bundle = AudioBundle::default();
     let rendering_bundle = RenderingBundle::<DefaultBackend>::new()
         .with_plugin(
             RenderToWindow::from_config_path(display_config_path).with_clear([0.0, 0.0, 0.0, 1.0]),
@@ -68,6 +90,8 @@ fn main() -> amethyst::Result<()> {
     let game_data = GameDataBuilder::default()
         // transforms (must come before ui bundle)
         .with_bundle(TransformBundle::new())?
+        // audio (must come before input bundle)
+        .with_bundle(audio_bundle)?
         // input (must come before ui bundle)
         .with_bundle(input_bundle)?
         // ui

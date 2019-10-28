@@ -1,3 +1,8 @@
+use std::ops::Deref;
+
+use amethyst::assets::AssetStorage;
+use amethyst::audio::output::Output;
+use amethyst::audio::Source;
 use amethyst::core::{SystemDesc, Transform};
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::prelude::*;
@@ -5,7 +10,15 @@ use amethyst::ui::UiText;
 use log::info;
 
 use crate::components::BallComponent;
-use crate::{ScoreBoard, ScoreText, ARENA_WIDTH};
+use crate::{ScoreBoard, ScoreText, Sounds, ARENA_WIDTH};
+
+pub fn play_score_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Option<&Output>) {
+    if let Some(ref output) = output.as_ref() {
+        if let Some(sound) = storage.get(&sounds.score_sfx) {
+            output.play_once(sound, 1.0);
+        }
+    }
+}
 
 #[derive(Default, SystemDesc)]
 pub struct ScoreSystem;
@@ -17,11 +30,23 @@ impl<'s> System<'s> for ScoreSystem {
         WriteStorage<'s, UiText>,
         Write<'s, ScoreBoard>,
         ReadExpect<'s, ScoreText>,
+        Read<'s, AssetStorage<Source>>,
+        ReadExpect<'s, Sounds>,
+        Option<Read<'s, Output>>,
     );
 
     fn run(
         &mut self,
-        (mut balls, mut transforms, mut ui_text, mut scores, score_text): Self::SystemData,
+        (
+            mut balls,
+            mut transforms,
+            mut ui_text,
+            mut scores,
+            score_text,
+            storage,
+            sounds,
+            audio_output,
+        ): Self::SystemData,
     ) {
         for (ball, transform) in (&mut balls, &mut transforms).join() {
             let ball_x = transform.translation().x;
@@ -49,6 +74,7 @@ impl<'s> System<'s> for ScoreSystem {
             if did_score {
                 transform.set_translation_x(ARENA_WIDTH * 0.5);
                 ball.velocity[0] = -ball.velocity[0];
+                play_score_sound(&*sounds, &storage, audio_output.as_ref().map(|o| o.deref()));
 
                 info!(
                     "Score: | {:^3} | {:^3} |",

@@ -1,4 +1,5 @@
 use amethyst::assets::{AssetStorage, Handle, Loader};
+use amethyst::audio::{AudioSink, DjSystem};
 use amethyst::core::transform::Transform;
 use amethyst::core::{ArcThreadPool, Time};
 use amethyst::ecs::prelude::*;
@@ -12,9 +13,12 @@ use log::debug;
 
 use super::PauseState;
 
+use crate::audio::load_audio_track;
 use crate::components::{BallComponent, PaddleComponent, PaddleSide, PADDLE_WIDTH};
 use crate::systems;
-use crate::{ScoreText, ARENA_HEIGHT, ARENA_WIDTH};
+use crate::{
+    Music, ScoreText, Sounds, ARENA_HEIGHT, ARENA_WIDTH, BOUNCE_SOUND, MUSIC_TRACKS, SCORE_SOUND,
+};
 
 #[derive(PartialEq)]
 pub enum RunningState {
@@ -34,6 +38,34 @@ pub struct GameState<'a, 'b> {
 
     game_start_timer: Option<f32>,
     sprite_sheet_handle: Option<Handle<SpriteSheet>>,
+}
+
+pub fn initialize_audio(world: &mut World) {
+    let (sound_effects, music) = {
+        let loader = world.read_resource::<Loader>();
+
+        // reduce music volume
+        let mut sink = world.write_resource::<AudioSink>();
+        sink.set_volume(0.25);
+
+        let music = MUSIC_TRACKS
+            .iter()
+            .map(|file| load_audio_track(&loader, &world, file))
+            .collect::<Vec<_>>()
+            .into_iter()
+            .cycle();
+        let music = Music { music };
+
+        let sound = Sounds {
+            bounce_sfx: load_audio_track(&loader, &world, BOUNCE_SOUND),
+            score_sfx: load_audio_track(&loader, &world, SCORE_SOUND),
+        };
+
+        (sound, music)
+    };
+
+    world.insert(sound_effects);
+    world.insert(music);
 }
 
 fn initialize_camera(world: &mut World) {
@@ -187,14 +219,20 @@ impl<'a, 'b> SimpleState for GameState<'a, 'b> {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         debug!("Entering game state");
 
-        let mut world = data.world;
+        let world = data.world;
 
         let mut dispatcher_builder = DispatcherBuilder::new();
 
         // add game systems
         dispatcher_builder.add(
+            DjSystem::new(|music: &mut Music| music.music.next()),
+            "dj_system",
+            &[],
+        );
+        dispatcher_builder.add(
             systems::PaddleInputSystem::default().pausable(RunningState::Running),
             "paddle_input_system",
+            // TODO: adding "input_system" as a dependency doesn't work here?
             &[],
         );
         dispatcher_builder.add(
@@ -225,10 +263,12 @@ impl<'a, 'b> SimpleState for GameState<'a, 'b> {
         // load resources
         self.sprite_sheet_handle.replace(load_sprite_sheet(world));
 
+        initialize_audio(world);
+
         // initialize entities
-        initialize_camera(&mut world);
-        initialize_paddles(&mut world, self.sprite_sheet_handle.clone().unwrap());
-        initialize_scoreboard(&mut world);
+        initialize_camera(world);
+        initialize_paddles(world, self.sprite_sheet_handle.clone().unwrap());
+        initialize_scoreboard(world);
     }
 
     fn on_stop(&mut self, _data: StateData<'_, GameData<'_, '_>>) {

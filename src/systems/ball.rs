@@ -1,10 +1,23 @@
+use std::ops::Deref;
+
+use amethyst::assets::AssetStorage;
+use amethyst::audio::output::Output;
+use amethyst::audio::Source;
 use amethyst::core::{SystemDesc, Time, Transform};
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::prelude::*;
 
 use crate::components::{BallComponent, PaddleComponent, PaddleSide};
 use crate::utils::point_in_rect;
-use crate::ARENA_HEIGHT;
+use crate::{Sounds, ARENA_HEIGHT};
+
+fn play_bounce_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Option<&Output>) {
+    if let Some(ref output) = output.as_ref() {
+        if let Some(sound) = storage.get(&sounds.bounce_sfx) {
+            output.play_once(sound, 1.0);
+        }
+    }
+}
 
 #[derive(Default, SystemDesc)]
 pub struct BallMovementSystem;
@@ -33,9 +46,15 @@ impl<'s> System<'s> for BallCollisionSystem {
         WriteStorage<'s, BallComponent>,
         ReadStorage<'s, PaddleComponent>,
         ReadStorage<'s, Transform>,
+        Read<'s, AssetStorage<Source>>,
+        ReadExpect<'s, Sounds>,
+        Option<Read<'s, Output>>,
     );
 
-    fn run(&mut self, (mut balls, paddles, transforms): Self::SystemData) {
+    fn run(
+        &mut self,
+        (mut balls, paddles, transforms, storage, sounds, audio_output): Self::SystemData,
+    ) {
         // check for ball collisions
         for (ball, transform) in (&mut balls, &transforms).join() {
             let ball_x = transform.translation().x;
@@ -46,6 +65,7 @@ impl<'s> System<'s> for BallCollisionSystem {
                 || (ball_y >= ARENA_HEIGHT - ball.radius && ball.velocity[1] > 0.0)
             {
                 ball.velocity[1] = -ball.velocity[1];
+                play_bounce_sound(&*sounds, &storage, audio_output.as_ref().map(|o| o.deref()));
             }
 
             // paddle collision
@@ -66,6 +86,11 @@ impl<'s> System<'s> for BallCollisionSystem {
                         || (paddle.side == PaddleSide::Right && ball.velocity[0] > 0.0)
                     {
                         ball.velocity[0] = -ball.velocity[0];
+                        play_bounce_sound(
+                            &*sounds,
+                            &storage,
+                            audio_output.as_ref().map(|o| o.deref()),
+                        );
                     }
                 }
             }
