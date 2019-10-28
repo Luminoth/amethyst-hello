@@ -1,5 +1,5 @@
 use amethyst::assets::{AssetStorage, Handle, Loader};
-use amethyst::audio::{AudioSink, DjSystem};
+use amethyst::audio::{AudioSink, DjSystemDesc};
 use amethyst::core::transform::Transform;
 use amethyst::core::{ArcThreadPool, Time};
 use amethyst::ecs::prelude::*;
@@ -225,7 +225,7 @@ impl<'a, 'b> SimpleState for GameState<'a, 'b> {
 
         // add game systems
         dispatcher_builder.add(
-            DjSystem::new(|music: &mut Music| music.music.next()),
+            DjSystemDesc::new(|music: &mut Music| music.music.next()).build(world),
             "dj_system",
             &[],
         );
