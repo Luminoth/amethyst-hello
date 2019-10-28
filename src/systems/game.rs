@@ -7,7 +7,7 @@ use log::info;
 use crate::components::BallComponent;
 use crate::{ScoreBoard, ScoreText, ARENA_WIDTH};
 
-#[derive(SystemDesc)]
+#[derive(Default, SystemDesc)]
 pub struct ScoreSystem;
 
 impl<'s> System<'s> for ScoreSystem {

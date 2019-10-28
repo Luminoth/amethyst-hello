@@ -6,7 +6,7 @@ use amethyst::input::{InputHandler, StringBindings};
 use crate::components::{PaddleComponent, PaddleSide, PADDLE_HEIGHT, PADDLE_SPEED};
 use crate::ARENA_HEIGHT;
 
-#[derive(SystemDesc)]
+#[derive(Default, SystemDesc)]
 pub struct PaddleInputSystem;
 
 impl<'s> System<'s> for PaddleInputSystem {

@@ -6,7 +6,7 @@ use crate::components::{BallComponent, PaddleComponent, PaddleSide};
 use crate::utils::point_in_rect;
 use crate::ARENA_HEIGHT;
 
-#[derive(SystemDesc)]
+#[derive(Default, SystemDesc)]
 pub struct BallMovementSystem;
 
 impl<'s> System<'s> for BallMovementSystem {
@@ -25,7 +25,7 @@ impl<'s> System<'s> for BallMovementSystem {
     }
 }
 
-#[derive(SystemDesc)]
+#[derive(Default, SystemDesc)]
 pub struct BallCollisionSystem;
 
 impl<'s> System<'s> for BallCollisionSystem {

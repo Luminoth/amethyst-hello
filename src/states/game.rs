@@ -16,6 +16,18 @@ use crate::components::{BallComponent, PaddleComponent, PaddleSide, PADDLE_WIDTH
 use crate::systems;
 use crate::{ScoreText, ARENA_HEIGHT, ARENA_WIDTH};
 
+#[derive(PartialEq)]
+pub enum RunningState {
+    Running,
+    Paused,
+}
+
+impl Default for RunningState {
+    fn default() -> Self {
+        RunningState::Running
+    }
+}
+
 #[derive(Default)]
 pub struct GameState<'a, 'b> {
     dispatcher: Option<Dispatcher<'a, 'b>>,
@@ -180,15 +192,23 @@ impl<'a, 'b> SimpleState for GameState<'a, 'b> {
         let mut dispatcher_builder = DispatcherBuilder::new();
 
         // add game systems
-        dispatcher_builder.add(systems::PaddleInputSystem, "paddle_input_system", &[]);
-        dispatcher_builder.add(systems::BallMovementSystem, "ball_movement_system", &[]);
         dispatcher_builder.add(
-            systems::BallCollisionSystem,
+            systems::PaddleInputSystem::default().pausable(RunningState::Running),
+            "paddle_input_system",
+            &[],
+        );
+        dispatcher_builder.add(
+            systems::BallMovementSystem::default().pausable(RunningState::Running),
+            "ball_movement_system",
+            &[],
+        );
+        dispatcher_builder.add(
+            systems::BallCollisionSystem::default().pausable(RunningState::Running),
             "ball_collision_system",
             &["paddle_input_system", "ball_movement_system"],
         );
         dispatcher_builder.add(
-            systems::ScoreSystem,
+            systems::ScoreSystem::default().pausable(RunningState::Running),
             "score_system",
             &["ball_movement_system"],
         );
