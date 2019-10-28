@@ -232,7 +232,6 @@ impl<'a, 'b> SimpleState for GameState<'a, 'b> {
         dispatcher_builder.add(
             systems::PaddleInputSystem::default().pausable(RunningState::Running),
             "paddle_input_system",
-            // TODO: adding "input_system" as a dependency doesn't work here?
             &[],
         );
         dispatcher_builder.add(
