@@ -5,9 +5,11 @@ mod utils;
 
 use std::iter::Cycle;
 use std::path::PathBuf;
+use std::time::Duration;
 use std::vec::IntoIter;
 
 use amethyst::audio::{AudioBundle, SourceHandle};
+use amethyst::core::frame_limiter::FrameRateLimitStrategy;
 use amethyst::core::transform::TransformBundle;
 use amethyst::ecs::prelude::*;
 use amethyst::input::{InputBundle, StringBindings};
@@ -105,7 +107,13 @@ fn main() -> amethyst::Result<()> {
     let assets_dir = app_root.join("assets");
 
     // start the game
-    Application::new(assets_dir, states::LoadingState, game_data)?.run();
+    Application::build(assets_dir, states::LoadingState)?
+        .with_frame_limit(
+            FrameRateLimitStrategy::SleepAndYield(Duration::from_millis(2)),
+            60,
+        )
+        .build(game_data)?
+        .run();
 
     Ok(())
 }
