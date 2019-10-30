@@ -1,7 +1,6 @@
 mod components;
 mod states;
 mod systems;
-mod utils;
 
 use std::iter::Cycle;
 use std::path::PathBuf;
@@ -23,6 +22,11 @@ use amethyst_imgui::RenderImgui;
 
 pub const ARENA_WIDTH: f32 = 100.0;
 pub const ARENA_HEIGHT: f32 = 100.0;
+
+pub const PADDLE_WIDTH: f32 = 4.0;
+pub const PADDLE_HEIGHT: f32 = 16.0;
+
+pub const BALL_RADIUS: f32 = 2.0;
 
 const BOUNCE_SOUND: &str = "audio/sfx/bounce.ogg";
 const SCORE_SOUND: &str = "audio/sfx/score.ogg";
@@ -103,17 +107,15 @@ fn main() -> amethyst::Result<()> {
         .with_barrier()
         .with(systems::DebugSystem, "debug_system", &[]);
 
-    // load assets
-    let assets_dir = app_root.join("assets");
-
     // start the game
-    Application::build(assets_dir, states::LoadingState)?
+    let assets_dir = app_root.join("assets");
+    let mut game = Application::build(assets_dir, states::LoadingState)?
         .with_frame_limit(
             FrameRateLimitStrategy::SleepAndYield(Duration::from_millis(2)),
             60,
         )
-        .build(game_data)?
-        .run();
+        .build(game_data)?;
+    game.run();
 
     Ok(())
 }

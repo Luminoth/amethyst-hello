@@ -1,5 +1,6 @@
 use amethyst::assets::{AssetStorage, Handle, Loader};
 use amethyst::audio::{AudioSink, DjSystemDesc, OggFormat};
+use amethyst::core::math::Vector3;
 use amethyst::core::transform::Transform;
 use amethyst::core::{ArcThreadPool, Time};
 use amethyst::ecs::prelude::*;
@@ -13,10 +14,11 @@ use log::debug;
 
 use super::PauseState;
 
-use crate::components::{BallComponent, PaddleComponent, PaddleSide, PADDLE_WIDTH};
+use crate::components::{BallComponent, BoundingBoxComponent, PaddleComponent, PaddleSide};
 use crate::systems;
 use crate::{
-    Music, ScoreText, Sounds, ARENA_HEIGHT, ARENA_WIDTH, BOUNCE_SOUND, MUSIC_TRACKS, SCORE_SOUND,
+    Music, ScoreText, Sounds, ARENA_HEIGHT, ARENA_WIDTH, BALL_RADIUS, BOUNCE_SOUND, MUSIC_TRACKS,
+    PADDLE_HEIGHT, PADDLE_WIDTH, SCORE_SOUND,
 };
 
 #[derive(PartialEq)]
@@ -113,6 +115,16 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     left_transform.set_translation_xyz(PADDLE_WIDTH * 0.5, y, 0.0);
     right_transform.set_translation_xyz(ARENA_WIDTH - PADDLE_WIDTH * 0.5, y, 0.0);
 
+    // create the bounds component
+    let left_bounds = BoundingBoxComponent::new(
+        left_transform.translation().clone(),
+        Vector3::new(PADDLE_WIDTH, PADDLE_HEIGHT, 0.0),
+    );
+    let right_bounds = BoundingBoxComponent::new(
+        right_transform.translation().clone(),
+        Vector3::new(PADDLE_WIDTH, PADDLE_HEIGHT, 0.0),
+    );
+
     // create a sprint renderer component
     let sprite_render = SpriteRender {
         sprite_sheet,
@@ -123,6 +135,7 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     world
         .create_entity()
         .with(left_transform)
+        .with(left_bounds)
         .with(sprite_render.clone())
         .with(PaddleComponent::new(PaddleSide::Left))
         .build();
@@ -130,6 +143,7 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     world
         .create_entity()
         .with(right_transform)
+        .with(right_bounds)
         .with(sprite_render.clone())
         .with(PaddleComponent::new(PaddleSide::Right))
         .build();
@@ -139,6 +153,12 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     // create the transform component
     let mut transform = Transform::default();
     transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 0.0);
+
+    // create the bounds component
+    let bounds = BoundingBoxComponent::new(
+        transform.translation().clone(),
+        Vector3::new(BALL_RADIUS * 2.0, BALL_RADIUS * 2.0, 0.0),
+    );
 
     // create a sprint renderer component
     let sprite_render = SpriteRender {
@@ -150,6 +170,7 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     world
         .create_entity()
         .with(transform)
+        .with(bounds)
         .with(sprite_render)
         .with(BallComponent::default())
         .build();

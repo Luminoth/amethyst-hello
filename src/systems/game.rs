@@ -9,10 +9,10 @@ use amethyst::ecs::prelude::*;
 use amethyst::ui::UiText;
 use log::info;
 
-use crate::components::BallComponent;
+use crate::components::{BallComponent, BoundingBoxComponent};
 use crate::{ScoreBoard, ScoreText, Sounds, ARENA_WIDTH};
 
-pub fn play_score_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Option<&Output>) {
+fn play_score_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Option<&Output>) {
     if let Some(ref output) = output.as_ref() {
         if let Some(sound) = storage.get(&sounds.score_sfx) {
             output.play_once(sound, 1.0);
@@ -26,6 +26,7 @@ pub struct ScoreSystem;
 impl<'s> System<'s> for ScoreSystem {
     type SystemData = (
         WriteStorage<'s, BallComponent>,
+        WriteStorage<'s, BoundingBoxComponent>,
         WriteStorage<'s, Transform>,
         WriteStorage<'s, UiText>,
         Write<'s, ScoreBoard>,
@@ -39,6 +40,7 @@ impl<'s> System<'s> for ScoreSystem {
         &mut self,
         (
             mut balls,
+            mut bounds,
             mut transforms,
             mut ui_text,
             mut scores,
@@ -48,17 +50,19 @@ impl<'s> System<'s> for ScoreSystem {
             audio_output,
         ): Self::SystemData,
     ) {
-        for (ball, transform) in (&mut balls, &mut transforms).join() {
-            let ball_x = transform.translation().x;
+        for (ball, transform, ball_bounds) in (&mut balls, &mut transforms, &mut bounds).join() {
+            let pos = ball_bounds.center();
+            let half_width = ball_bounds.extents().x;
 
-            let did_score = if ball_x <= ball.radius {
+            // check for score, update score text if so
+            let did_score = if pos.x <= half_width {
                 scores.score_right = (scores.score_right + 1).min(999);
 
                 if let Some(text) = ui_text.get_mut(score_text.p2_score) {
                     text.text = scores.score_right.to_string();
                 }
                 true
-            } else if ball_x >= ARENA_WIDTH - ball.radius {
+            } else if pos.x >= ARENA_WIDTH - half_width {
                 scores.score_left = (scores.score_left + 1).min(999);
 
                 if let Some(text) = ui_text.get_mut(score_text.p1_score) {
@@ -73,6 +77,7 @@ impl<'s> System<'s> for ScoreSystem {
             // and reverse its direction
             if did_score {
                 transform.set_translation_x(ARENA_WIDTH * 0.5);
+                *ball_bounds.center_mut() = *transform.translation();
                 ball.velocity[0] = -ball.velocity[0];
                 play_score_sound(&*sounds, &storage, audio_output.as_ref().map(|o| o.deref()));
 
