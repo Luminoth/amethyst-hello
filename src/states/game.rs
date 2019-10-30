@@ -1,5 +1,5 @@
 use amethyst::assets::{AssetStorage, Handle, Loader};
-use amethyst::audio::{AudioSink, DjSystemDesc};
+use amethyst::audio::{AudioSink, DjSystemDesc, OggFormat};
 use amethyst::core::transform::Transform;
 use amethyst::core::{ArcThreadPool, Time};
 use amethyst::ecs::prelude::*;
@@ -13,7 +13,6 @@ use log::debug;
 
 use super::PauseState;
 
-use crate::audio::load_audio_track;
 use crate::components::{BallComponent, PaddleComponent, PaddleSide, PADDLE_WIDTH};
 use crate::systems;
 use crate::{
@@ -50,15 +49,15 @@ pub fn initialize_audio(world: &mut World) {
 
         let music = MUSIC_TRACKS
             .iter()
-            .map(|file| load_audio_track(&loader, &world, file))
+            .map(|file| loader.load(*file, OggFormat, (), &world.read_resource()))
             .collect::<Vec<_>>()
             .into_iter()
             .cycle();
         let music = Music { music };
 
         let sound = Sounds {
-            bounce_sfx: load_audio_track(&loader, &world, BOUNCE_SOUND),
-            score_sfx: load_audio_track(&loader, &world, SCORE_SOUND),
+            bounce_sfx: loader.load(BOUNCE_SOUND, OggFormat, (), &world.read_resource()),
+            score_sfx: loader.load(SCORE_SOUND, OggFormat, (), &world.read_resource()),
         };
 
         (sound, music)

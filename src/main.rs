@@ -1,4 +1,3 @@
-mod audio;
 mod components;
 mod states;
 mod systems;
@@ -23,12 +22,12 @@ use amethyst_imgui::RenderImgui;
 pub const ARENA_WIDTH: f32 = 100.0;
 pub const ARENA_HEIGHT: f32 = 100.0;
 
-const BOUNCE_SOUND: &str = "audio/bounce.ogg";
-const SCORE_SOUND: &str = "audio/score.ogg";
+const BOUNCE_SOUND: &str = "audio/sfx/bounce.ogg";
+const SCORE_SOUND: &str = "audio/sfx/score.ogg";
 
 const MUSIC_TRACKS: &[&str] = &[
-    "music/Computer_Music_All-Stars_-_Wheres_My_Jetpack.ogg",
-    "music/Computer_Music_All-Stars_-_Albatross_v2.ogg",
+    "audio/music/Computer_Music_All-Stars_-_Wheres_My_Jetpack.ogg",
+    "audio/music/Computer_Music_All-Stars_-_Albatross_v2.ogg",
 ];
 
 pub struct Sounds {
@@ -87,6 +86,7 @@ fn main() -> amethyst::Result<()> {
         .with_plugin(RenderImgui::<StringBindings>::default());
     let ui_bundle = UiBundle::<StringBindings>::new();
 
+    // init base bundles / systems
     let game_data = GameDataBuilder::default()
         // transforms (must come before ui bundle)
         .with_bundle(TransformBundle::new())?
