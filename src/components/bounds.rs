@@ -1,4 +1,5 @@
 use amethyst::core::math::Vector3;
+use amethyst::core::Transform;
 use amethyst::ecs::prelude::*;
 use amethyst::ecs::Component;
 
@@ -6,6 +7,42 @@ use amethyst::ecs::Component;
 pub struct BoundingBoxComponent {
     center: Vector3<f32>,
     extents: Vector3<f32>,
+}
+
+pub fn bounding_box_intersects(
+    at: &Transform,
+    abb: &BoundingBoxComponent,
+    bt: &Transform,
+    bbb: &BoundingBoxComponent,
+) -> bool {
+    let amin = at.translation() + abb.min();
+    let amax = at.translation() + abb.max();
+    let bmin = bt.translation() + bbb.min();
+    let bmax = bt.translation() + bbb.max();
+
+    amin.x < bmax.x
+        && amax.x > bmin.x
+        && amin.y < bmax.y
+        && amax.y > bmin.y
+        && amin.z < bmax.z
+        && amax.z > bmin.z
+}
+
+#[allow(dead_code)]
+pub fn bounding_box_contains(
+    transform: &Transform,
+    bounds: &BoundingBoxComponent,
+    point: &Vector3<f32>,
+) -> bool {
+    let min = transform.translation() + bounds.min();
+    let max = transform.translation() + bounds.max();
+
+    min.x < point.x
+        && max.x > point.x
+        && min.y < point.y
+        && max.y > point.y
+        && min.z < point.z
+        && max.z > point.z
 }
 
 impl BoundingBoxComponent {
@@ -20,14 +57,11 @@ impl BoundingBoxComponent {
         &self.center
     }
 
-    pub fn center_mut(&mut self) -> &mut Vector3<f32> {
-        &mut self.center
-    }
-
     pub fn extents(&self) -> &Vector3<f32> {
         &self.extents
     }
 
+    #[allow(dead_code)]
     pub fn size(&self) -> Vector3<f32> {
         self.extents * 2.0
     }
@@ -38,31 +72,5 @@ impl BoundingBoxComponent {
 
     pub fn max(&self) -> Vector3<f32> {
         self.center + self.extents
-    }
-
-    pub fn contains(&self, point: &Vector3<f32>) -> bool {
-        let min = self.min();
-        let max = self.max();
-
-        min.x < point.x
-            && max.x > point.x
-            && min.y < point.y
-            && max.y > point.y
-            && min.z < point.z
-            && max.z > point.z
-    }
-
-    pub fn intersects(&self, other: &BoundingBoxComponent) -> bool {
-        let min = self.min();
-        let max = self.max();
-        let omin = other.min();
-        let omax = other.max();
-
-        min.x < omax.x
-            && max.x > omin.x
-            && min.y < omax.y
-            && max.y > omin.y
-            && min.z < omax.z
-            && max.z > omin.z
     }
 }

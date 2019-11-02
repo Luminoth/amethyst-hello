@@ -3,7 +3,7 @@ use amethyst::derive::SystemDesc;
 use amethyst::ecs::prelude::*;
 use amethyst::input::{InputHandler, StringBindings};
 
-use crate::components::{BoundingBoxComponent, PaddleComponent, PaddleSide, PADDLE_SPEED};
+use crate::components::{PaddleComponent, PaddleSide, PADDLE_SPEED};
 use crate::{ARENA_HEIGHT, PADDLE_HEIGHT};
 
 #[derive(Default, SystemDesc)]
@@ -12,14 +12,13 @@ pub struct PaddleInputSystem;
 impl<'s> System<'s> for PaddleInputSystem {
     type SystemData = (
         WriteStorage<'s, Transform>,
-        WriteStorage<'s, BoundingBoxComponent>,
         ReadStorage<'s, PaddleComponent>,
         Read<'s, InputHandler<StringBindings>>,
         Read<'s, Time>,
     );
 
-    fn run(&mut self, (mut transforms, mut bounds, paddles, input, time): Self::SystemData) {
-        for (paddle, transform, paddle_bounds) in (&paddles, &mut transforms, &mut bounds).join() {
+    fn run(&mut self, (mut transforms, paddles, input, time): Self::SystemData) {
+        for (paddle, transform) in (&paddles, &mut transforms).join() {
             // read the input
             let movement = match paddle.side {
                 PaddleSide::Left => input.axis_value("left_paddle"),
@@ -35,7 +34,6 @@ impl<'s> System<'s> for PaddleInputSystem {
                         .min(ARENA_HEIGHT - PADDLE_HEIGHT * 0.5)
                         .max(PADDLE_HEIGHT * 0.5),
                 );
-                *paddle_bounds.center_mut() = *transform.translation();
             }
         }
     }

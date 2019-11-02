@@ -24,6 +24,7 @@ fn play_score_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Opt
 pub struct ScoreSystem;
 
 impl<'s> System<'s> for ScoreSystem {
+    #[allow(clippy::type_complexity)]
     type SystemData = (
         WriteStorage<'s, BallComponent>,
         WriteStorage<'s, BoundingBoxComponent>,
@@ -51,18 +52,18 @@ impl<'s> System<'s> for ScoreSystem {
         ): Self::SystemData,
     ) {
         for (ball, transform, ball_bounds) in (&mut balls, &mut transforms, &mut bounds).join() {
-            let pos = ball_bounds.center();
+            let bounds_center = transform.translation() + ball_bounds.center();
             let half_width = ball_bounds.extents().x;
 
             // check for score, update score text if so
-            let did_score = if pos.x <= half_width {
+            let did_score = if bounds_center.x <= half_width {
                 scores.score_right = (scores.score_right + 1).min(999);
 
                 if let Some(text) = ui_text.get_mut(score_text.p2_score) {
                     text.text = scores.score_right.to_string();
                 }
                 true
-            } else if pos.x >= ARENA_WIDTH - half_width {
+            } else if bounds_center.x >= ARENA_WIDTH - half_width {
                 scores.score_left = (scores.score_left + 1).min(999);
 
                 if let Some(text) = ui_text.get_mut(score_text.p1_score) {
@@ -77,7 +78,6 @@ impl<'s> System<'s> for ScoreSystem {
             // and reverse its direction
             if did_score {
                 transform.set_translation_x(ARENA_WIDTH * 0.5);
-                *ball_bounds.center_mut() = *transform.translation();
                 ball.velocity[0] = -ball.velocity[0];
                 play_score_sound(&*sounds, &storage, audio_output.as_ref().map(|o| o.deref()));
 

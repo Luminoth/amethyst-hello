@@ -116,12 +116,8 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     right_transform.set_translation_xyz(ARENA_WIDTH - PADDLE_WIDTH * 0.5, y, 0.0);
 
     // create the bounds component
-    let left_bounds = BoundingBoxComponent::new(
-        left_transform.translation().clone(),
-        Vector3::new(PADDLE_WIDTH, PADDLE_HEIGHT, 0.0),
-    );
-    let right_bounds = BoundingBoxComponent::new(
-        right_transform.translation().clone(),
+    let bounds = BoundingBoxComponent::new(
+        Vector3::from_element(0.0),
         Vector3::new(PADDLE_WIDTH, PADDLE_HEIGHT, 0.0),
     );
 
@@ -135,7 +131,7 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     world
         .create_entity()
         .with(left_transform)
-        .with(left_bounds)
+        .with(bounds.clone())
         .with(sprite_render.clone())
         .with(PaddleComponent::new(PaddleSide::Left))
         .build();
@@ -143,7 +139,7 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     world
         .create_entity()
         .with(right_transform)
-        .with(right_bounds)
+        .with(bounds.clone())
         .with(sprite_render.clone())
         .with(PaddleComponent::new(PaddleSide::Right))
         .build();
@@ -156,7 +152,7 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
 
     // create the bounds component
     let bounds = BoundingBoxComponent::new(
-        transform.translation().clone(),
+        Vector3::from_element(0.0),
         Vector3::new(BALL_RADIUS * 2.0, BALL_RADIUS * 2.0, 0.0),
     );
 
