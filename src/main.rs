@@ -23,9 +23,12 @@ use amethyst_imgui::RenderImgui;
 pub const ARENA_WIDTH: f32 = 100.0;
 pub const ARENA_HEIGHT: f32 = 100.0;
 
+pub const PADDLE_SPEED: f32 = 50.0;
 pub const PADDLE_WIDTH: f32 = 4.0;
 pub const PADDLE_HEIGHT: f32 = 16.0;
 
+pub const BALL_VELOCITY_X: f32 = 75.0;
+pub const BALL_VELOCITY_Y: f32 = 50.0;
 pub const BALL_RADIUS: f32 = 2.0;
 
 const BOUNCE_SOUND: &str = "audio/sfx/bounce.ogg";
@@ -82,7 +85,6 @@ fn main() -> amethyst::Result<()> {
     // create bundles
     let input_bundle =
         InputBundle::<StringBindings>::new().with_bindings_from_file(binding_path)?;
-    let audio_bundle = AudioBundle::default();
     let rendering_bundle = RenderingBundle::<DefaultBackend>::new()
         .with_plugin(
             RenderToWindow::from_config_path(display_config_path).with_clear([0.0, 0.0, 0.0, 1.0]),
@@ -97,7 +99,7 @@ fn main() -> amethyst::Result<()> {
         // transforms (must come before ui bundle)
         .with_bundle(TransformBundle::new())?
         // audio (must come before input bundle)
-        .with_bundle(audio_bundle)?
+        .with_bundle(AudioBundle::default())?
         // input (must come before ui bundle)
         .with_bundle(input_bundle)?
         // ui

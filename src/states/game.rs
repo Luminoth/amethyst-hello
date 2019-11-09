@@ -14,11 +14,13 @@ use log::debug;
 
 use super::PauseState;
 
-use crate::components::{BallComponent, BoundingBoxComponent, PaddleComponent, PaddleSide};
+use crate::components::{
+    BallComponent, BoundingBoxComponent, PaddleComponent, PaddleSide, PhysicalComponent,
+};
 use crate::systems;
 use crate::{
-    Music, ScoreText, Sounds, ARENA_HEIGHT, ARENA_WIDTH, BALL_RADIUS, BOUNCE_SOUND, MUSIC_TRACKS,
-    PADDLE_HEIGHT, PADDLE_WIDTH, SCORE_SOUND,
+    Music, ScoreText, Sounds, ARENA_HEIGHT, ARENA_WIDTH, BALL_RADIUS, BALL_VELOCITY_X,
+    BALL_VELOCITY_Y, BOUNCE_SOUND, MUSIC_TRACKS, PADDLE_HEIGHT, PADDLE_WIDTH, SCORE_SOUND,
 };
 
 #[derive(PartialEq)]
@@ -150,6 +152,10 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     let mut transform = Transform::default();
     transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 0.0);
 
+    // create the physical component
+    let mut physical = PhysicalComponent::default();
+    physical.velocity = Vector3::new(BALL_VELOCITY_X, BALL_VELOCITY_Y, 0.0);
+
     // create the bounds component
     let bounds = BoundingBoxComponent::new(
         Vector3::from_element(0.0),
@@ -166,6 +172,7 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     world
         .create_entity()
         .with(transform)
+        .with(physical)
         .with(bounds)
         .with(sprite_render)
         .with(BallComponent::default())
@@ -251,19 +258,19 @@ impl<'a, 'b> SimpleState for GameState<'a, 'b> {
             &[],
         );
         dispatcher_builder.add(
-            systems::BallMovementSystem::default().pausable(RunningState::Running),
-            "ball_movement_system",
+            systems::MovementSystem::default().pausable(RunningState::Running),
+            "movement_system",
             &[],
         );
         dispatcher_builder.add(
             systems::BallCollisionSystem::default().pausable(RunningState::Running),
             "ball_collision_system",
-            &["paddle_input_system", "ball_movement_system"],
+            &["paddle_input_system", "movement_system"],
         );
         dispatcher_builder.add(
             systems::ScoreSystem::default().pausable(RunningState::Running),
             "score_system",
-            &["ball_movement_system"],
+            &["movement_system"],
         );
 
         let mut dispatcher = dispatcher_builder

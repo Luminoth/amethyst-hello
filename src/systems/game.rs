@@ -9,7 +9,7 @@ use amethyst::ecs::prelude::*;
 use amethyst::ui::UiText;
 use log::info;
 
-use crate::components::{BallComponent, BoundingBoxComponent};
+use crate::components::{BallComponent, BoundingBoxComponent, PhysicalComponent};
 use crate::{ScoreBoard, ScoreText, Sounds, ARENA_WIDTH};
 
 fn play_score_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Option<&Output>) {
@@ -26,7 +26,8 @@ pub struct ScoreSystem;
 impl<'s> System<'s> for ScoreSystem {
     #[allow(clippy::type_complexity)]
     type SystemData = (
-        WriteStorage<'s, BallComponent>,
+        ReadStorage<'s, BallComponent>,
+        WriteStorage<'s, PhysicalComponent>,
         WriteStorage<'s, BoundingBoxComponent>,
         WriteStorage<'s, Transform>,
         WriteStorage<'s, UiText>,
@@ -40,7 +41,8 @@ impl<'s> System<'s> for ScoreSystem {
     fn run(
         &mut self,
         (
-            mut balls,
+            balls,
+            mut physicals,
             mut bounds,
             mut transforms,
             mut ui_text,
@@ -51,8 +53,10 @@ impl<'s> System<'s> for ScoreSystem {
             audio_output,
         ): Self::SystemData,
     ) {
-        for (ball, transform, ball_bounds) in (&mut balls, &mut transforms, &mut bounds).join() {
-            let bounds_center = transform.translation() + ball_bounds.center();
+        for (_ball, ball_physical, ball_transform, ball_bounds) in
+            (&balls, &mut physicals, &mut transforms, &mut bounds).join()
+        {
+            let bounds_center = ball_transform.translation() + ball_bounds.center();
             let half_width = ball_bounds.extents().x;
 
             // check for score, update score text if so
@@ -77,8 +81,8 @@ impl<'s> System<'s> for ScoreSystem {
             // if someone scored, move the ball back to the center
             // and reverse its direction
             if did_score {
-                transform.set_translation_x(ARENA_WIDTH * 0.5);
-                ball.velocity[0] = -ball.velocity[0];
+                ball_transform.set_translation_x(ARENA_WIDTH * 0.5);
+                ball_physical.velocity.x = -ball_physical.velocity.x;
                 play_score_sound(&*sounds, &storage, audio_output.as_ref().map(|o| o.deref()));
 
                 info!(
