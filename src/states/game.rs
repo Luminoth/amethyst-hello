@@ -19,8 +19,8 @@ use crate::components::{
 };
 use crate::systems;
 use crate::{
-    Music, ScoreText, Sounds, ARENA_HEIGHT, ARENA_WIDTH, BALL_RADIUS, BALL_VELOCITY_X,
-    BALL_VELOCITY_Y, BOUNCE_SOUND, MUSIC_TRACKS, PADDLE_HEIGHT, PADDLE_WIDTH, SCORE_SOUND,
+    Music, ScoreText, SoundEffects, ARENA_HEIGHT, ARENA_WIDTH, AUDIO_BOUNCE, AUDIO_MUSIC,
+    AUDIO_SCORE, BALL_RADIUS, BALL_VELOCITY_X, BALL_VELOCITY_Y, PADDLE_HEIGHT, PADDLE_WIDTH,
 };
 
 #[derive(PartialEq)]
@@ -51,7 +51,7 @@ pub fn initialize_audio(world: &mut World) {
         let mut sink = world.write_resource::<AudioSink>();
         sink.set_volume(0.25);
 
-        let music = MUSIC_TRACKS
+        let music = AUDIO_MUSIC
             .iter()
             .map(|file| loader.load(*file, OggFormat, (), &world.read_resource()))
             .collect::<Vec<_>>()
@@ -59,12 +59,12 @@ pub fn initialize_audio(world: &mut World) {
             .cycle();
         let music = Music { music };
 
-        let sound = Sounds {
-            bounce_sfx: loader.load(BOUNCE_SOUND, OggFormat, (), &world.read_resource()),
-            score_sfx: loader.load(SCORE_SOUND, OggFormat, (), &world.read_resource()),
+        let sound_effects = SoundEffects {
+            bounce: loader.load(AUDIO_BOUNCE, OggFormat, (), &world.read_resource()),
+            score: loader.load(AUDIO_SCORE, OggFormat, (), &world.read_resource()),
         };
 
-        (sound, music)
+        (sound_effects, music)
     };
 
     world.insert(sound_effects);

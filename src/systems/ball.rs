@@ -11,11 +11,15 @@ use crate::components::{
     bounding_box_intersects, BallComponent, BoundingBoxComponent, PaddleComponent, PaddleSide,
     PhysicalComponent,
 };
-use crate::{Sounds, ARENA_HEIGHT};
+use crate::{SoundEffects, ARENA_HEIGHT};
 
-fn play_bounce_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Option<&Output>) {
+fn play_bounce_sound(
+    sound_effects: &SoundEffects,
+    storage: &AssetStorage<Source>,
+    output: Option<&Output>,
+) {
     if let Some(ref output) = output.as_ref() {
-        if let Some(sound) = storage.get(&sounds.bounce_sfx) {
+        if let Some(sound) = storage.get(&sound_effects.bounce) {
             output.play_once(sound, 1.0);
         }
     }
@@ -33,13 +37,13 @@ impl<'s> System<'s> for BallCollisionSystem {
         ReadStorage<'s, PaddleComponent>,
         ReadStorage<'s, BoundingBoxComponent>,
         Read<'s, AssetStorage<Source>>,
-        ReadExpect<'s, Sounds>,
+        ReadExpect<'s, SoundEffects>,
         Option<Read<'s, Output>>,
     );
 
     fn run(
         &mut self,
-        (transforms, mut physicals, balls, paddles, bounds, storage, sounds, audio_output): Self::SystemData,
+        (transforms, mut physicals, balls, paddles, bounds, storage, sound_effects, audio_output): Self::SystemData,
     ) {
         for (_ball, ball_transform, ball_physical, ball_bounds) in
             (&balls, &transforms, &mut physicals, &bounds).join()
@@ -52,7 +56,11 @@ impl<'s> System<'s> for BallCollisionSystem {
                 || (bounds_center.y >= ARENA_HEIGHT - half_height && ball_physical.velocity.y > 0.0)
             {
                 ball_physical.velocity.y = -ball_physical.velocity.y;
-                play_bounce_sound(&*sounds, &storage, audio_output.as_ref().map(|o| o.deref()));
+                play_bounce_sound(
+                    &*sound_effects,
+                    &storage,
+                    audio_output.as_ref().map(|o| o.deref()),
+                );
             }
 
             // paddle collision
@@ -71,7 +79,11 @@ impl<'s> System<'s> for BallCollisionSystem {
                     || (paddle.side == PaddleSide::Right && ball_physical.velocity.x > 0.0)
                 {
                     ball_physical.velocity.x = -ball_physical.velocity.x;
-                    play_bounce_sound(&*sounds, &storage, audio_output.as_ref().map(|o| o.deref()));
+                    play_bounce_sound(
+                        &*sound_effects,
+                        &storage,
+                        audio_output.as_ref().map(|o| o.deref()),
+                    );
                 }
             }
         }

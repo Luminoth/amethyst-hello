@@ -10,11 +10,15 @@ use amethyst::ui::UiText;
 use log::info;
 
 use crate::components::{BallComponent, BoundingBoxComponent, PhysicalComponent};
-use crate::{ScoreBoard, ScoreText, Sounds, ARENA_WIDTH};
+use crate::{ScoreBoard, ScoreText, SoundEffects, ARENA_WIDTH};
 
-fn play_score_sound(sounds: &Sounds, storage: &AssetStorage<Source>, output: Option<&Output>) {
+fn play_score_sound(
+    sound_effects: &SoundEffects,
+    storage: &AssetStorage<Source>,
+    output: Option<&Output>,
+) {
     if let Some(ref output) = output.as_ref() {
-        if let Some(sound) = storage.get(&sounds.score_sfx) {
+        if let Some(sound) = storage.get(&sound_effects.score) {
             output.play_once(sound, 1.0);
         }
     }
@@ -34,7 +38,7 @@ impl<'s> System<'s> for ScoreSystem {
         Write<'s, ScoreBoard>,
         ReadExpect<'s, ScoreText>,
         Read<'s, AssetStorage<Source>>,
-        ReadExpect<'s, Sounds>,
+        ReadExpect<'s, SoundEffects>,
         Option<Read<'s, Output>>,
     );
 
@@ -49,7 +53,7 @@ impl<'s> System<'s> for ScoreSystem {
             mut scores,
             score_text,
             storage,
-            sounds,
+            sound_effects,
             audio_output,
         ): Self::SystemData,
     ) {
@@ -83,7 +87,11 @@ impl<'s> System<'s> for ScoreSystem {
             if did_score {
                 ball_transform.set_translation_x(ARENA_WIDTH * 0.5);
                 ball_physical.velocity.x = -ball_physical.velocity.x;
-                play_score_sound(&*sounds, &storage, audio_output.as_ref().map(|o| o.deref()));
+                play_score_sound(
+                    &*sound_effects,
+                    &storage,
+                    audio_output.as_ref().map(|o| o.deref()),
+                );
 
                 info!(
                     "Score: | {:^3} | {:^3} |",

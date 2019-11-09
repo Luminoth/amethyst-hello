@@ -27,21 +27,21 @@ pub const PADDLE_SPEED: f32 = 50.0;
 pub const PADDLE_WIDTH: f32 = 4.0;
 pub const PADDLE_HEIGHT: f32 = 16.0;
 
-pub const BALL_VELOCITY_X: f32 = 75.0;
-pub const BALL_VELOCITY_Y: f32 = 50.0;
+pub const BALL_VELOCITY_X: f32 = 50.0;
+pub const BALL_VELOCITY_Y: f32 = 25.0;
 pub const BALL_RADIUS: f32 = 2.0;
 
-const BOUNCE_SOUND: &str = "audio/sfx/bounce.ogg";
-const SCORE_SOUND: &str = "audio/sfx/score.ogg";
+const AUDIO_BOUNCE: &str = "audio/sfx/bounce.ogg";
+const AUDIO_SCORE: &str = "audio/sfx/score.ogg";
 
-const MUSIC_TRACKS: &[&str] = &[
+const AUDIO_MUSIC: &[&str] = &[
     "audio/music/Computer_Music_All-Stars_-_Wheres_My_Jetpack.ogg",
     "audio/music/Computer_Music_All-Stars_-_Albatross_v2.ogg",
 ];
 
-pub struct Sounds {
-    pub score_sfx: SourceHandle,
-    pub bounce_sfx: SourceHandle,
+pub struct SoundEffects {
+    pub score: SourceHandle,
+    pub bounce: SourceHandle,
 }
 
 pub struct Music {
@@ -64,8 +64,10 @@ fn init_logging() -> amethyst::Result<()> {
     let logdir = PathBuf::new().join("var").join("logs");
     std::fs::create_dir_all(&logdir)?;
 
+    // TODO: remove old logs
+
     amethyst::start_logger(amethyst::LoggerConfig {
-        level_filter: amethyst::LogLevelFilter::Debug,
+        level_filter: amethyst::LogLevelFilter::Info,
         log_file: Some(logdir.join("amethyst-hello.log")),
         ..Default::default()
     });
@@ -80,11 +82,16 @@ fn main() -> amethyst::Result<()> {
 
     // load configs
     let display_config_path = app_root.join("etc").join("display.ron");
-    let binding_path = app_root.join("etc").join("bindings.ron");
+
+    let input_bindings_path = if cfg!(feature = "sdl_controller") {
+        app_root.join("etc").join("controller_input.ron")
+    } else {
+        app_root.join("etc").join("keyboard_input.ron")
+    };
 
     // create bundles
     let input_bundle =
-        InputBundle::<StringBindings>::new().with_bindings_from_file(binding_path)?;
+        InputBundle::<StringBindings>::new().with_bindings_from_file(input_bindings_path)?;
     let rendering_bundle = RenderingBundle::<DefaultBackend>::new()
         .with_plugin(
             RenderToWindow::from_config_path(display_config_path).with_clear([0.0, 0.0, 0.0, 1.0]),
