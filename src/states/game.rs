@@ -1,8 +1,8 @@
 use amethyst::assets::{AssetStorage, Handle, Loader};
-use amethyst::audio::{AudioSink, DjSystemDesc, OggFormat};
+use amethyst::audio::{AudioSink, OggFormat};
 use amethyst::core::math::Vector3;
 use amethyst::core::transform::Transform;
-use amethyst::core::{ArcThreadPool, Time};
+use amethyst::core::Time;
 use amethyst::ecs::prelude::*;
 use amethyst::input::{is_key_down, VirtualKeyCode};
 use amethyst::prelude::*;
@@ -17,28 +17,14 @@ use super::PauseState;
 use crate::components::{
     BallComponent, BoundingBoxComponent, PaddleComponent, PaddleSide, PhysicalComponent,
 };
-use crate::systems;
+use crate::gamedata::CustomGameData;
 use crate::{
     Music, ScoreText, SoundEffects, ARENA_HEIGHT, ARENA_WIDTH, AUDIO_BOUNCE, AUDIO_MUSIC,
     AUDIO_SCORE, BALL_RADIUS, BALL_VELOCITY_X, BALL_VELOCITY_Y, PADDLE_HEIGHT, PADDLE_WIDTH,
 };
 
-#[derive(PartialEq)]
-pub enum RunningState {
-    Running,
-    Paused,
-}
-
-impl Default for RunningState {
-    fn default() -> Self {
-        RunningState::Running
-    }
-}
-
 #[derive(Default)]
-pub struct GameState<'a, 'b> {
-    dispatcher: Option<Dispatcher<'a, 'b>>,
-
+pub struct GameState {
     game_start_timer: Option<f32>,
     sprite_sheet_handle: Option<Handle<SpriteSheet>>,
 }
@@ -238,46 +224,11 @@ fn initialize_scoreboard(world: &mut World) {
     world.insert(ScoreText { p1_score, p2_score });
 }
 
-impl<'a, 'b> SimpleState for GameState<'a, 'b> {
-    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
+impl<'a, 'b> State<CustomGameData<'a, 'b>, StateEvent> for GameState {
+    fn on_start(&mut self, data: StateData<'_, CustomGameData<'_, '_>>) {
         debug!("Entering game state");
 
         let world = data.world;
-
-        let mut dispatcher_builder = DispatcherBuilder::new();
-
-        // add game systems
-        dispatcher_builder.add(
-            DjSystemDesc::new(|music: &mut Music| music.music.next()).build(world),
-            "dj_system",
-            &[],
-        );
-        dispatcher_builder.add(
-            systems::PaddleInputSystem::default().pausable(RunningState::Running),
-            "paddle_input_system",
-            &[],
-        );
-        dispatcher_builder.add(
-            systems::MovementSystem::default().pausable(RunningState::Running),
-            "movement_system",
-            &[],
-        );
-        dispatcher_builder.add(
-            systems::BallCollisionSystem::default().pausable(RunningState::Running),
-            "ball_collision_system",
-            &["paddle_input_system", "movement_system"],
-        );
-        dispatcher_builder.add(
-            systems::ScoreSystem::default().pausable(RunningState::Running),
-            "score_system",
-            &["movement_system"],
-        );
-
-        let mut dispatcher = dispatcher_builder
-            .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
-            .build();
-        dispatcher.setup(world);
-        self.dispatcher.replace(dispatcher);
 
         // init internal state
         self.game_start_timer.replace(1.0);
@@ -293,15 +244,15 @@ impl<'a, 'b> SimpleState for GameState<'a, 'b> {
         initialize_scoreboard(world);
     }
 
-    fn on_stop(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
+    fn on_stop(&mut self, _data: StateData<'_, CustomGameData<'_, '_>>) {
         debug!("Leaving game state");
     }
 
-    fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
-        // run the dispatcher
-        if let Some(dispatcher) = self.dispatcher.as_mut() {
-            dispatcher.dispatch(&data.world);
-        }
+    fn update(
+        &mut self,
+        data: StateData<'_, CustomGameData<'_, '_>>,
+    ) -> Trans<CustomGameData<'a, 'b>, StateEvent> {
+        data.data.update_game(&data.world);
 
         if let Some(mut timer) = self.game_start_timer.take() {
             // advance the timer
@@ -323,9 +274,9 @@ impl<'a, 'b> SimpleState for GameState<'a, 'b> {
 
     fn handle_event(
         &mut self,
-        _data: StateData<'_, GameData<'_, '_>>,
+        _data: StateData<'_, CustomGameData<'_, '_>>,
         event: StateEvent,
-    ) -> SimpleTrans {
+    ) -> Trans<CustomGameData<'a, 'b>, StateEvent> {
         if let StateEvent::Window(event) = &event {
             if is_key_down(&event, VirtualKeyCode::Escape) {
                 return Trans::Push(Box::new(PauseState));

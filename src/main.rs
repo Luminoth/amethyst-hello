@@ -1,4 +1,6 @@
+mod bundles;
 mod components;
+mod gamedata;
 mod states;
 mod systems;
 
@@ -20,6 +22,12 @@ use amethyst::ui::{RenderUi, UiBundle};
 use amethyst::utils::application_root_dir;
 use amethyst_imgui::RenderImgui;
 
+use bundles::{EngineBundle, GameBundle};
+use gamedata::CustomGameDataBuilder;
+
+// https://github.com/amethyst/amethyst/tree/v0.13.2/examples/custom_game_data
+// has some examples of doing a loading UI
+
 pub const ARENA_WIDTH: f32 = 100.0;
 pub const ARENA_HEIGHT: f32 = 100.0;
 
@@ -38,6 +46,18 @@ const AUDIO_MUSIC: &[&str] = &[
     "audio/music/Computer_Music_All-Stars_-_Wheres_My_Jetpack.ogg",
     "audio/music/Computer_Music_All-Stars_-_Albatross_v2.ogg",
 ];
+
+#[derive(PartialEq)]
+pub enum RunningState {
+    Running,
+    Paused,
+}
+
+impl Default for RunningState {
+    fn default() -> Self {
+        RunningState::Running
+    }
+}
 
 pub struct SoundEffects {
     pub score: SourceHandle,
@@ -102,19 +122,23 @@ fn main() -> amethyst::Result<()> {
     let ui_bundle = UiBundle::<StringBindings>::new();
 
     // init base bundles / systems
-    let game_data = GameDataBuilder::default()
+    let game_data = CustomGameDataBuilder::default()
         // transforms (must come before ui bundle)
-        .with_bundle(TransformBundle::new())?
+        .with_engine_bundle(TransformBundle::new())
         // audio (must come before input bundle)
-        .with_bundle(AudioBundle::default())?
+        .with_engine_bundle(AudioBundle::default())
         // input (must come before ui bundle)
-        .with_bundle(input_bundle)?
+        .with_engine_bundle(input_bundle)
         // ui
-        .with_bundle(ui_bundle)?
+        .with_engine_bundle(ui_bundle)
         // rendering
-        .with_bundle(rendering_bundle)?
-        .with_barrier()
-        .with(systems::DebugSystem, "debug_system", &[]);
+        .with_engine_bundle(rendering_bundle)
+        // engine bundle
+        .with_engine_bundle(EngineBundle::default())
+        // game bundles
+        .with_game_bundle(GameBundle::default())
+        .with_engine_barrier()
+        .with_engine(systems::DebugSystem, "debug_system", &[]);
 
     // start the game
     let assets_dir = app_root.join("assets");
