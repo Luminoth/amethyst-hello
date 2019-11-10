@@ -2,7 +2,7 @@ use amethyst::core::math::Vector3;
 use amethyst::ecs::prelude::*;
 use amethyst::ecs::Component;
 
-#[derive(Component)]
+#[derive(Component, Debug, Clone)]
 pub struct PhysicalComponent {
     pub velocity: Vector3<f32>,
     pub acceleration: Vector3<f32>,

@@ -1,9 +1,10 @@
 use amethyst::core::{SystemDesc, Time, Transform};
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::prelude::*;
-use amethyst::input::{InputHandler, StringBindings};
+use amethyst::input::InputHandler;
 
 use crate::components::{PaddleComponent, PaddleSide};
+use crate::input::{AxisBinding, InputBindingTypes};
 use crate::{ARENA_HEIGHT, PADDLE_HEIGHT, PADDLE_SPEED};
 
 #[derive(Default, SystemDesc)]
@@ -13,7 +14,7 @@ impl<'s> System<'s> for PaddleInputSystem {
     type SystemData = (
         WriteStorage<'s, Transform>,
         ReadStorage<'s, PaddleComponent>,
-        Read<'s, InputHandler<StringBindings>>,
+        Read<'s, InputHandler<InputBindingTypes>>,
         Read<'s, Time>,
     );
 
@@ -21,8 +22,8 @@ impl<'s> System<'s> for PaddleInputSystem {
         for (paddle, transform) in (&paddles, &mut transforms).join() {
             // read the input
             let movement = match paddle.side {
-                PaddleSide::Left => input.axis_value("left_paddle"),
-                PaddleSide::Right => input.axis_value("right_paddle"),
+                PaddleSide::Left => input.axis_value(&AxisBinding::LeftPaddle),
+                PaddleSide::Right => input.axis_value(&AxisBinding::RightPaddle),
             };
 
             // apply the translation

@@ -1,6 +1,7 @@
 mod bundles;
 mod components;
 mod gamedata;
+mod input;
 mod states;
 mod systems;
 
@@ -24,6 +25,7 @@ use amethyst_imgui::RenderImgui;
 
 use bundles::{EngineBundle, GameBundle};
 use gamedata::CustomGameDataBuilder;
+use input::InputBindingTypes;
 
 // https://github.com/amethyst/amethyst/tree/v0.13.2/examples/custom_game_data
 // has some examples of doing a loading UI
@@ -111,7 +113,7 @@ fn main() -> amethyst::Result<()> {
 
     // create bundles
     let input_bundle =
-        InputBundle::<StringBindings>::new().with_bindings_from_file(input_bindings_path)?;
+        InputBundle::<InputBindingTypes>::new().with_bindings_from_file(input_bindings_path)?;
     let rendering_bundle = RenderingBundle::<DefaultBackend>::new()
         .with_plugin(
             RenderToWindow::from_config_path(display_config_path).with_clear([0.0, 0.0, 0.0, 1.0]),
