@@ -1,9 +1,15 @@
+use amethyst::assets::PrefabData;
 use amethyst::core::math::Vector3;
 use amethyst::core::Transform;
+use amethyst::derive::PrefabData;
 use amethyst::ecs::prelude::*;
 use amethyst::ecs::Component;
+use amethyst::Error;
+use serde::{Deserialize, Serialize};
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, PrefabData, Debug, Clone, Serialize, Deserialize)]
+#[prefab(Component)]
+#[serde(deny_unknown_fields)]
 pub struct BoundingBoxComponent {
     center: Vector3<f32>,
     extents: Vector3<f32>,

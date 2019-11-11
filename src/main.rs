@@ -2,6 +2,7 @@ mod bundles;
 mod components;
 mod gamedata;
 mod input;
+mod prefabs;
 mod states;
 mod systems;
 
@@ -36,10 +37,6 @@ pub const ARENA_HEIGHT: f32 = 100.0;
 pub const PADDLE_SPEED: f32 = 50.0;
 pub const PADDLE_WIDTH: f32 = 4.0;
 pub const PADDLE_HEIGHT: f32 = 16.0;
-
-pub const BALL_VELOCITY_X: f32 = 50.0;
-pub const BALL_VELOCITY_Y: f32 = 25.0;
-pub const BALL_RADIUS: f32 = 2.0;
 
 const AUDIO_BOUNCE: &str = "audio/sfx/bounce.ogg";
 const AUDIO_SCORE: &str = "audio/sfx/score.ogg";

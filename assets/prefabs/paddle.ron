@@ -1,0 +1,12 @@
+#![enable(implicit_some)]
+(
+    entities: [
+        (
+            data: PaddlePrefab(
+                transform: (),
+                bounds: (),
+                paddle: (),
+            ),
+        ),
+    ],
+)

@@ -1,0 +1,19 @@
+#![enable(implicit_some)]
+(
+    entities: [
+        (
+            data: BallPrefab(
+                transform: (),
+                physical: (
+                    velocity: [50.0, 25.0, 0.0],
+                    acceleration: [0.0, 0.0, 0.0],
+                ),
+                bounds: (
+                    center: [0.0, 0.0, 0.0],
+                    extents: [1.0, 1.0, 0.0],
+                ),
+                ball: (),
+            ),
+        ),
+    ],
+)

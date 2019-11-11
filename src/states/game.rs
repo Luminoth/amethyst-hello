@@ -1,4 +1,4 @@
-use amethyst::assets::{AssetStorage, Handle, Loader};
+use amethyst::assets::{AssetStorage, Handle, Loader, PrefabLoader, RonFormat};
 use amethyst::audio::{AudioSink, OggFormat};
 use amethyst::core::math::Vector3;
 use amethyst::core::transform::Transform;
@@ -14,13 +14,12 @@ use log::debug;
 
 use super::PauseState;
 
-use crate::components::{
-    BallComponent, BoundingBoxComponent, PaddleComponent, PaddleSide, PhysicalComponent,
-};
+use crate::components::{BallComponent, BoundingBoxComponent, PaddleComponent, PaddleSide};
 use crate::gamedata::CustomGameData;
+use crate::prefabs::BallPrefab;
 use crate::{
     Music, ScoreText, SoundEffects, ARENA_HEIGHT, ARENA_WIDTH, AUDIO_BOUNCE, AUDIO_MUSIC,
-    AUDIO_SCORE, BALL_RADIUS, BALL_VELOCITY_X, BALL_VELOCITY_Y, PADDLE_HEIGHT, PADDLE_WIDTH,
+    AUDIO_SCORE, PADDLE_HEIGHT, PADDLE_WIDTH,
 };
 
 #[derive(Default)]
@@ -134,19 +133,13 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
 }
 
 fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
+    let prefab = world.exec(|loader: PrefabLoader<'_, BallPrefab>| {
+        loader.load("prefabs/ball.ron", RonFormat, ())
+    });
+
     // create the transform component
-    let mut transform = Transform::default();
-    transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 0.0);
-
-    // create the physical component
-    let mut physical = PhysicalComponent::default();
-    physical.velocity = Vector3::new(BALL_VELOCITY_X, BALL_VELOCITY_Y, 0.0);
-
-    // create the bounds component
-    let bounds = BoundingBoxComponent::new(
-        Vector3::from_element(0.0),
-        Vector3::new(BALL_RADIUS * 2.0, BALL_RADIUS * 2.0, 0.0),
-    );
+    /*let mut transform = Transform::default();
+    transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 0.0);*/
 
     // create a sprint renderer component
     let sprite_render = SpriteRender {
@@ -157,9 +150,10 @@ fn initialize_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     // create the ball entity
     world
         .create_entity()
-        .with(transform)
+        /*.with(transform)
         .with(physical)
-        .with(bounds)
+        .with(bounds)*/
+        .with(prefab)
         .with(sprite_render)
         .with(BallComponent::default())
         .build();
