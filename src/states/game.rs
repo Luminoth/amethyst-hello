@@ -4,12 +4,12 @@ use amethyst::core::math::Vector3;
 use amethyst::core::transform::Transform;
 use amethyst::core::Time;
 use amethyst::ecs::prelude::*;
-use amethyst::input::{is_key_down, VirtualKeyCode};
+use amethyst::input::{is_close_requested, is_key_down, VirtualKeyCode};
 use amethyst::prelude::*;
 use amethyst::renderer::{
     Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
 };
-use amethyst::ui::{Anchor, TtfFormat, UiText, UiTransform};
+use amethyst::ui::{Anchor, TtfFormat, UiPrefab, UiText, UiTransform};
 use log::debug;
 
 use super::PauseState;
@@ -22,10 +22,12 @@ use crate::{
     AUDIO_SCORE, PADDLE_HEIGHT, PADDLE_WIDTH,
 };
 
-#[derive(Default)]
 pub struct GameState {
+    //scene: Handle<Prefab<MyPrefabData>>,
     game_start_timer: Option<f32>,
-    sprite_sheet_handle: Option<Handle<SpriteSheet>>,
+    sprite_sheet: Option<Handle<SpriteSheet>>,
+
+    paused_ui: Handle<UiPrefab>,
 }
 
 pub fn initialize_audio(world: &mut World) {
@@ -218,6 +220,16 @@ fn initialize_scoreboard(world: &mut World) {
     world.insert(ScoreText { p1_score, p2_score });
 }
 
+impl GameState {
+    pub fn new(paused_ui: Handle<UiPrefab>) -> Self {
+        Self {
+            game_start_timer: None,
+            sprite_sheet: None,
+            paused_ui,
+        }
+    }
+}
+
 impl<'a, 'b> State<CustomGameData<'a, 'b>, StateEvent> for GameState {
     fn on_start(&mut self, data: StateData<'_, CustomGameData<'_, '_>>) {
         debug!("Entering game state");
@@ -228,18 +240,39 @@ impl<'a, 'b> State<CustomGameData<'a, 'b>, StateEvent> for GameState {
         self.game_start_timer.replace(1.0);
 
         // load resources
-        self.sprite_sheet_handle.replace(load_sprite_sheet(world));
+        self.sprite_sheet.replace(load_sprite_sheet(world));
 
         initialize_audio(world);
 
         // initialize entities
         initialize_camera(world);
-        initialize_paddles(world, self.sprite_sheet_handle.clone().unwrap());
+        initialize_paddles(world, self.sprite_sheet.clone().unwrap());
         initialize_scoreboard(world);
     }
 
     fn on_stop(&mut self, _data: StateData<'_, CustomGameData<'_, '_>>) {
         debug!("Leaving game state");
+    }
+
+    fn handle_event(
+        &mut self,
+        data: StateData<'_, CustomGameData<'_, '_>>,
+        event: StateEvent,
+    ) -> Trans<CustomGameData<'a, 'b>, StateEvent> {
+        if let StateEvent::Window(event) = &event {
+            if is_close_requested(&event) {
+                return Trans::Quit;
+            } else if is_key_down(&event, VirtualKeyCode::Escape) {
+                return Trans::Push(Box::new(PauseState::new(
+                    data.world
+                        .create_entity()
+                        .with(self.paused_ui.clone())
+                        .build(),
+                )));
+            }
+        }
+
+        Trans::None
     }
 
     fn update(
@@ -257,23 +290,9 @@ impl<'a, 'b> State<CustomGameData<'a, 'b>, StateEvent> for GameState {
 
             // spawn the ball when the game is ready
             if timer <= 0.0 {
-                initialize_ball(data.world, self.sprite_sheet_handle.clone().unwrap());
+                initialize_ball(data.world, self.sprite_sheet.clone().unwrap());
             } else {
                 self.game_start_timer.replace(timer);
-            }
-        }
-
-        Trans::None
-    }
-
-    fn handle_event(
-        &mut self,
-        _data: StateData<'_, CustomGameData<'_, '_>>,
-        event: StateEvent,
-    ) -> Trans<CustomGameData<'a, 'b>, StateEvent> {
-        if let StateEvent::Window(event) = &event {
-            if is_key_down(&event, VirtualKeyCode::Escape) {
-                return Trans::Push(Box::new(PauseState));
             }
         }
 
