@@ -22,9 +22,10 @@ use amethyst::renderer::types::DefaultBackend;
 use amethyst::renderer::RenderingBundle;
 use amethyst::ui::{RenderUi, UiBundle};
 use amethyst::utils::application_root_dir;
+use amethyst::utils::fps_counter::FpsCounterBundle;
 use amethyst_imgui::RenderImgui;
 
-use bundles::{EngineBundle, GameBundle};
+use bundles::{EngineBundle, GameBundle, MenuBundle};
 use gamedata::CustomGameDataBuilder;
 use input::InputBindingTypes;
 
@@ -132,8 +133,12 @@ fn main() -> amethyst::Result<()> {
         .with_engine_bundle(ui_bundle)
         // rendering
         .with_engine_bundle(rendering_bundle)
+        // fps counter
+        .with_engine_bundle(FpsCounterBundle::default())
         // engine bundle
         .with_engine_bundle(EngineBundle::default())
+        // menu bundles
+        .with_menu_bundle(MenuBundle::default())
         // game bundles
         .with_game_bundle(GameBundle::default())
         .with_engine_barrier()

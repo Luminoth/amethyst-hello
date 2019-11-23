@@ -12,6 +12,7 @@ use amethyst::DataDispose;
 
 pub struct CustomGameData<'a, 'b> {
     engine_dispatcher: Option<Dispatcher<'a, 'b>>,
+    menu_dispatcher: Option<Dispatcher<'a, 'b>>,
     game_dispatcher: Option<Dispatcher<'a, 'b>>,
 }
 
@@ -27,6 +28,10 @@ impl<'a, 'b> CustomGameData<'a, 'b> {
     }
 
     pub fn update_main_menu(&mut self, world: &World) {
+        if let Some(menu_dispatcher) = &mut self.menu_dispatcher {
+            menu_dispatcher.dispatch(world);
+        }
+
         self.update_engine(world);
     }
 
@@ -47,6 +52,10 @@ impl<'a, 'b> CustomGameData<'a, 'b> {
             game_dispatcher.dispose(&mut world);
         }
 
+        if let Some(mut menu_dispatcher) = self.menu_dispatcher.take() {
+            menu_dispatcher.dispatch(&mut world);
+        }
+
         if let Some(engine_dispatcher) = self.engine_dispatcher.take() {
             engine_dispatcher.dispose(&mut world);
         }
@@ -61,6 +70,7 @@ impl DataDispose for CustomGameData<'_, '_> {
 
 pub struct CustomGameDataBuilder<'a, 'b> {
     engine_operations: Vec<Box<dyn DispatcherOperation<'a, 'b>>>,
+    menu_operations: Vec<Box<dyn DispatcherOperation<'a, 'b>>>,
     game_operations: Vec<Box<dyn DispatcherOperation<'a, 'b>>>,
 }
 
@@ -74,6 +84,7 @@ impl<'a, 'b> CustomGameDataBuilder<'a, 'b> {
     pub fn new() -> Self {
         Self {
             engine_operations: Vec::new(),
+            menu_operations: Vec::new(),
             game_operations: Vec::new(),
         }
     }
@@ -112,6 +123,46 @@ impl<'a, 'b> CustomGameDataBuilder<'a, 'b> {
         }) as Box<dyn DispatcherOperation<'a, 'b> + 'static>;
 
         self.engine_operations.push(dispatcher_operation);
+
+        self
+    }
+
+    #[allow(dead_code)]
+    pub fn with_menu_barrier(mut self) -> Self {
+        self.menu_operations.push(Box::new(AddBarrier));
+
+        self
+    }
+
+    pub fn with_menu_bundle<B>(mut self, bundle: B) -> Self
+    where
+        B: SystemBundle<'a, 'b> + 'static,
+    {
+        self.menu_operations.push(Box::new(AddBundle { bundle }));
+
+        self
+    }
+
+    #[allow(dead_code)]
+    pub fn with_menu<S, N>(mut self, system: S, name: N, dependencies: &[N]) -> Self
+    where
+        S: for<'c> System<'c> + 'static + Send,
+        N: Into<String> + Clone,
+    {
+        let name = name.into();
+        let dependencies = dependencies
+            .iter()
+            .map(Clone::clone)
+            .map(Into::into)
+            .collect();
+
+        let dispatcher_operation = Box::new(AddSystem {
+            system,
+            name,
+            dependencies,
+        }) as Box<dyn DispatcherOperation<'a, 'b> + 'static>;
+
+        self.menu_operations.push(dispatcher_operation);
 
         self
     }
@@ -160,10 +211,12 @@ impl<'a, 'b> CustomGameDataBuilder<'a, 'b> {
 impl<'a, 'b> DataInit<CustomGameData<'a, 'b>> for CustomGameDataBuilder<'a, 'b> {
     fn build(self, world: &mut World) -> CustomGameData<'a, 'b> {
         let engine_dispatcher = build_dispatcher(world, self.engine_operations);
+        let menu_dispatcher = build_dispatcher(world, self.menu_operations);
         let game_dispatcher = build_dispatcher(world, self.game_operations);
 
         CustomGameData {
             engine_dispatcher: Some(engine_dispatcher),
+            menu_dispatcher: Some(menu_dispatcher),
             game_dispatcher: Some(game_dispatcher),
         }
     }
