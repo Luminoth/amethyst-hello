@@ -16,3 +16,6 @@ amethyst-imgui = "0.5"
 derivative = "1.0"
 log = "0.4"
 serde = "1.0"
+
+[profile.release.build-override]
+opt-level = 0
