@@ -1,9 +1,7 @@
-use std::ops::Deref;
-
 use amethyst::assets::AssetStorage;
 use amethyst::audio::output::Output;
 use amethyst::audio::Source;
-use amethyst::core::{SystemDesc, Transform};
+use amethyst::core::Transform;
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::prelude::*;
 use amethyst::ui::UiText;
@@ -87,11 +85,7 @@ impl<'s> System<'s> for ScoreSystem {
             if did_score {
                 ball_transform.set_translation_x(ARENA_WIDTH * 0.5);
                 ball_physical.velocity.x = -ball_physical.velocity.x;
-                play_score_sound(
-                    &*sound_effects,
-                    &storage,
-                    audio_output.as_ref().map(|o| o.deref()),
-                );
+                play_score_sound(&*sound_effects, &storage, audio_output.as_deref());
 
                 info!(
                     "Score: | {:^3} | {:^3} |",

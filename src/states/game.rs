@@ -128,8 +128,8 @@ fn initialize_paddles(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     world
         .create_entity()
         .with(right_transform)
-        .with(bounds.clone())
-        .with(sprite_render.clone())
+        .with(bounds)
+        .with(sprite_render)
         .with(PaddleComponent::new(PaddleSide::Right))
         .build();
 }
@@ -209,7 +209,7 @@ fn initialize_scoreboard(world: &mut World) {
         .create_entity()
         .with(p2_transform)
         .with(UiText::new(
-            font.clone(),
+            font,
             "0".to_string(),
             [1.0, 1.0, 1.0, 1.0],
             50.0,

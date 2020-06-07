@@ -1,9 +1,7 @@
-use std::ops::Deref;
-
 use amethyst::assets::AssetStorage;
 use amethyst::audio::output::Output;
 use amethyst::audio::Source;
-use amethyst::core::{SystemDesc, Transform};
+use amethyst::core::Transform;
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::prelude::*;
 
@@ -56,11 +54,7 @@ impl<'s> System<'s> for BallCollisionSystem {
                 || (bounds_center.y >= ARENA_HEIGHT - half_height && ball_physical.velocity.y > 0.0)
             {
                 ball_physical.velocity.y = -ball_physical.velocity.y;
-                play_bounce_sound(
-                    &*sound_effects,
-                    &storage,
-                    audio_output.as_ref().map(|o| o.deref()),
-                );
+                play_bounce_sound(&*sound_effects, &storage, audio_output.as_deref());
             }
 
             // paddle collision
@@ -79,11 +73,7 @@ impl<'s> System<'s> for BallCollisionSystem {
                     || (paddle.side == PaddleSide::Right && ball_physical.velocity.x > 0.0)
                 {
                     ball_physical.velocity.x = -ball_physical.velocity.x;
-                    play_bounce_sound(
-                        &*sound_effects,
-                        &storage,
-                        audio_output.as_ref().map(|o| o.deref()),
-                    );
+                    play_bounce_sound(&*sound_effects, &storage, audio_output.as_deref());
                 }
             }
         }

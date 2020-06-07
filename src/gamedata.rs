@@ -53,7 +53,7 @@ impl<'a, 'b> CustomGameData<'a, 'b> {
         }
 
         if let Some(mut menu_dispatcher) = self.menu_dispatcher.take() {
-            menu_dispatcher.dispatch(&mut world);
+            menu_dispatcher.dispatch(&world);
         }
 
         if let Some(engine_dispatcher) = self.engine_dispatcher.take() {

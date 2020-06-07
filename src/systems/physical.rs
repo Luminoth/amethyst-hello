@@ -1,5 +1,5 @@
 use amethyst::core::math::Vector3;
-use amethyst::core::{SystemDesc, Time, Transform};
+use amethyst::core::{Time, Transform};
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::prelude::*;
 

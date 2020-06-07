@@ -1,4 +1,3 @@
-use amethyst::core::SystemDesc;
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::prelude::*;
 

@@ -114,7 +114,7 @@ fn main() -> amethyst::Result<()> {
         InputBundle::<InputBindingTypes>::new().with_bindings_from_file(input_bindings_path)?;
     let rendering_bundle = RenderingBundle::<DefaultBackend>::new()
         .with_plugin(
-            RenderToWindow::from_config_path(display_config_path).with_clear([0.0, 0.0, 0.0, 1.0]),
+            RenderToWindow::from_config_path(display_config_path)?.with_clear([0.0, 0.0, 0.0, 1.0]),
         )
         .with_plugin(RenderFlat2D::default())
         .with_plugin(RenderUi::default())
