@@ -203,7 +203,7 @@ fn initialize_scoreboard(world: &mut World) {
             [1.0, 1.0, 1.0, 1.0],
             50.0,
             LineMode::Single,
-            Anchor::TopMiddle,
+            Anchor::Middle,
         ))
         .build();
 
@@ -216,7 +216,7 @@ fn initialize_scoreboard(world: &mut World) {
             [1.0, 1.0, 1.0, 1.0],
             50.0,
             LineMode::Single,
-            Anchor::TopMiddle,
+            Anchor::Middle,
         ))
         .build();
 
