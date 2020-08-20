@@ -9,7 +9,7 @@ use amethyst::prelude::*;
 use amethyst::renderer::{
     Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
 };
-use amethyst::ui::{Anchor, TtfFormat, UiPrefab, UiText, UiTransform};
+use amethyst::ui::{Anchor, LineMode, TtfFormat, UiPrefab, UiText, UiTransform};
 use log::debug;
 
 use super::PauseState;
@@ -202,6 +202,8 @@ fn initialize_scoreboard(world: &mut World) {
             "0".to_string(),
             [1.0, 1.0, 1.0, 1.0],
             50.0,
+            LineMode::Single,
+            Anchor::TopMiddle,
         ))
         .build();
 
@@ -213,6 +215,8 @@ fn initialize_scoreboard(world: &mut World) {
             "0".to_string(),
             [1.0, 1.0, 1.0, 1.0],
             50.0,
+            LineMode::Single,
+            Anchor::TopMiddle,
         ))
         .build();
 
