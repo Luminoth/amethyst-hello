@@ -1,3 +1,5 @@
+#![deny(warnings)]
+
 mod bundles;
 mod components;
 mod gamedata;
